@@ -1,0 +1,165 @@
+\documentclass[12pt,a4paper,titlepage,headinclude,bibtotoc]{scrartcl}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{physics}
+\usepackage{svg}
+\usepackage{float}
+\include{julia}
+
+
+
+\title{Numerical Fluid Dynamics}
+\author{Linus Okko Grimm}
+\date{July 2022}
+
+\begin{document}
+
+
+
+\maketitle
+
+\begin{gather}
+    \pdv{}{t}\va{v} + \left(\va{v}\cdot\nabla \right)\va{v} = - \frac{1}{\rho}\nabla p + \nu\nabla^2\va{v} + g \alpha T \hat{e}_y\label{eq_fst}\\
+    \nabla \cdot \va{v} = 0\label{eq_snd}\\
+    \pdv{}{t} T + \va{v}\cdot\nabla T = \nabla^2 T + Q\label{eq_thrd}
+\end{gather}
+
+
+\section{Task 1}
+
+
+%\begin{align}
+%    T^\prime &= T\cdot \frac{\kappa}{Q_0L_y^2} \\
+%    r ^\prime &= \frac{r}{L_y}\\
+%    t ^\prime &= \frac{t\cdot \kappa}{L_y^2}\\
+%    v ^\prime &= \frac{r^\prime}{t^\prime} = \frac{r L_y}{ t \kappa} = % v\cdot\frac{L_y}{\kappa}\\
+%\end{align}
+
+Using the following transformations
+\begin{align*}
+    T &=  \frac{T^\prime Q_0 L_y^2}{\kappa}
+    &r &= L_y\cdot r^\prime \\
+    t &= t^\prime \cdot \frac{L_y^2}{\kappa}
+    &v &= v^\prime \cdot \frac{\kappa}{L_y}\\
+    \nabla &= \nabla^\prime \frac{1}{L_y}
+    &Q &= Q_0\cdot Q^\prime
+\end{align*}
+% Equation 1
+the first equation \eqref{eq_fst}
+\begin{equation}
+    \pdv{}{t}\va{v} + \left(\va{v}\cdot\nabla \right)\va{v} = - \frac{1}{\rho}\nabla p + \nu\nabla^2\va{v} + g \alpha T \hat{e}_y
+\end{equation}
+can be written as
+\begin{equation}
+    \frac{\kappa^2}{L_y^3}\pdv{}{t}\va{v}^\prime + \frac{\kappa^2}{L_y^3}\left(\va{v}^\prime \cdot\nabla^\prime\right)\va{v}^\prime = - \frac{1}{\rho} \nabla^\prime p \frac{1}{L_y} + \nu \nabla^{\prime^2} \frac{\kappa}{L_y^3}\va{v}^\prime + g \alpha T^\prime\frac{Q_0L_y^2}{\kappa} \hat{e}_y.
+\end{equation}
+With the substitutions $\nu = \text{Pr} \cdot \kappa$, $p = p^\prime \rho \frac{\kappa^2}{L_y^2}$ and $\text{Ra} = \frac{g\alpha Q_0 \kappa}{\nu}\frac{L_y^5}{\kappa^3}$ the common factor $\frac{\kappa^2}{L_y^3}$ can be divided out.
+This results in the equation:
+\begin{equation}
+    \pdv{}{t^\prime}\va{v}^\prime + \left(\va{v}^\prime\cdot\nabla^\prime \right)\va{v}^\prime = - \nabla^{\prime^2} p^\prime + \text{Pr}\nabla^{\prime^2}\va{v}^\prime + \text{Pr}\cdot\text{Ra}\cdot T\hat{e}_y. \label{eq_ad_fst}
+\end{equation}
+% Equation 2
+The same transformation are performed on the second \eqref{eq_snd} and third \eqref{eq_thrd} equation
+\begin{equation}
+    \nabla \cdot \va{v} = \frac{\kappa}{L_y^2}\nabla^\prime \cdot \va{v}^\prime = 0 \Rightarrow \nabla^\prime \cdot\va{v}^\prime = 0. \label{eq_ad_snd}
+\end{equation}
+% Equation 3
+For the third equation \eqref{eq_thrd} follows
+\begin{align}
+    \pdv{}{t^\prime} \frac{\kappa}{L_y^2} T^\prime Q_0 \frac{L_y^2}{\kappa} + \va{v}^\prime\cdot \frac{\kappa}{L_y}\nabla^\prime T^\prime Q_0 \frac{L_y^2}{\kappa} &= \frac{\kappa}{L_y^2}\nabla^{\prime^2} T^\prime Q_0 \frac{L_y^2}{\kappa} + Q_0\cdot Q^\prime\\
+    \Rightarrow \pdv{}{t^\prime} T^\prime + \va{v}^\prime\cdot\nabla^{\prime}T^\prime &= \nabla^{\prime^2}T^\prime + Q^\prime . \label{eq_ad_thrd}
+\end{align}
+
+
+\section{Task 2}
+
+
+\section{Task 4}
+\begin{align}
+    \left(\dv{t} + \abs{\va{k}}^2 \right)\hat{T}_k  + {\left(\reallywidehat{\va{v}\cdot \nabla T} \right)}_k &= \hat{Q}_k \label{eq_spectral_method}\\
+     -\abs{\va{k}}^2\hat{T}_k - {\left(\reallywidehat{\va{v}\cdot \nabla T} \right)}_k + \hat{Q}_k &= \dv{}{t}\hat{T}_k \label{eq_spectral_method_rw}
+\end{align}
+The spectral method \eqref{eq_spectral_method} is used to solve the equation \eqref{eq_ad_thrd}.
+The diffusion term $\hat{T}_k\vert \va{k} \vert ^2$ is integrated via Crank-Nicolson \ref{CN}.
+Adams-Bashforth \ref{AD} is used for term $\reallywidehat{\va{v}\cdot \nabla}$.
+Equation \eqref{eq_spectral_method_rw} can then be rewritten as
+\begin{equation}
+    \frac{1}{2}\abs{\va{k}}^2 \left( \hat{T}^n_k + \hat{T}^{n+1}_k \right) - \frac{1}{2}\left(3\qty(\reallywidehat{\va{v}^n\cdot \nabla T^n})_k   - \qty(\reallywidehat{\va{v}^{n-1}\cdot \nabla T^{n-1}})_k\right) + \hat{Q}_k= \dv{t}{} \hat{T}_k. \label{eq_methods}
+\end{equation}
+By discretizing $\dv{}{t} \hat{T}_k$ with 
+\begin{equation}
+    \frac{\hat{T}^{n+1}_k - \hat{T}^n_k}{\Delta t} = \dv{}{t}\hat{T}_k
+\end{equation}
+we can rewrite equation \eqref{eq_methods} as
+\begin{equation}
+    \hat{T}^{n+1}_k = \frac{\hat{T}_k^n + \Delta t\frac{1}{2}\qty(-\abs{\va{k}}^2\hat{T}^n_k - \left(3\qty(\reallywidehat{\va{v}^n\cdot \nabla T^n})_k   - \qty(\reallywidehat{\va{v}^{n-1}\cdot \nabla T^{n-1}})_k\right) + \hat{Q}_k)}{1 + \frac{1}{2}\Delta t\abs{\va{k}}^2}. \label{eq_integrate_T}
+\end{equation}
+Using equation \eqref{eq_integrate_T} the time integration step is implemented in Julia (Listing \ref{c:intT}).
+
+\section{Task 5}
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.9\textwidth]{Plots/velocity.svg}
+    \caption{$x$ and $y$ components of velocity field $\va{v}$.}
+    \label{fig:task5_velocity}
+\end{figure}
+\colorbox{red}{Vx und Vy sind vertauscht}
+
+From the given velocity field $\va{v}^\star$ (Figure \ref{fig:task5_velocity}) and the temperature field $T^\star$ a heat source distribution $Q^\star$ can be calculated.
+Since $\va{v}^\star$ and $T^\star$ are known $Q^\star$ (Figure \ref{fig:task5_q_star}) is given by
+\begin{align}
+    Q^\star ={}&\va{v}^\star\cdot\nabla T^\star - \nabla^2T^\star\\
+    ={}&\begin{pmatrix}\pi\sin\qty(4\pi x)\cos\qty(2 \pi y)\\ -2\pi\cos\qty(4\pi x)\sin\qty(2 \pi y)\end{pmatrix}\cdot\begin{pmatrix}\pdv{}{x}\cos\qty(2\pi x)\sin\qty(2 \pi y)\\\pdv{}{y}\cos\qty(2\pi x)\sin\qty(2 \pi y)\end{pmatrix} - \qty(\pdv[2]{}{x} + \pdv[2]{}{y})T^\star\\
+    \begin{split}
+        ={}& -2\pi^2\sin\qty(4\pi x)\cos\qty(2\pi y)\cdot \sin\qty(2\pi x)\sin\qty(2\pi y) \\
+        &- 4\pi^2\cos\qty(4\pi x)\sin(2\pi y)\cdot\cos\qty(2\pi x)\cos\qty(2\pi y) \\
+        &+8\pi^2\cos\qty(2\pi x)\sin\qty(2\pi y) 
+    \end{split}
+\end{align}
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.6\textwidth]{Plots/q_star.svg}
+    \caption{Temperature source term $Q^\star$.}
+    \label{fig:task5_q_star}
+\end{figure}
+The program from task 4 is now being tested with $Q^\star$, $\va{v}^\star$ and an initial temperature field of $T=0$.
+For the Fourier transform a resolution of 32x32 modes was chosen.
+After integrating with a $\Delta t = 0.001$ for about 1800 time steps a stable solution was found \mbox{(Figure \ref{fig:task5_stable})}.
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.6\textwidth]{Plots/task5_stable.svg}
+    \caption{Stable solution for $T$ after 1800 time steps with $\Delta t = 0.001$.}
+    \label{fig:task5_stable}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.9\textwidth]{Plots/stability.svg}
+    \caption{Sum of the absolute differences between temperature fields $T^n$ and $T^{n-1}$.}
+    \label{fig:task5_stability}
+\end{figure}
+
+
+
+\section{Appendix}
+
+
+\subsection{Crank-Nicolson method}
+\label{CN}
+\begin{equation}
+    x_{i+1} = x_i + \frac{h}{2}\qty[ F\qty(x_i,t_i) + F\qty(x_{i+1},t_{i+1})] 
+\end{equation}
+\colorbox{red}{QUELLE}
+\subsection{Adams-Bashforth method of second order}
+\label{AD}
+\begin{equation}
+        x_{i+1} = x_i + \frac{h}{2}\qty[3F\qty(x_i,t_i) - F\qty(x_{i-1},t_{i-1})] \quad\cite[p.~131]{Ferziger}
+\end{equation}
+
+\subsection{Code}
+\code{1}{20}{task4.jl}{Time integration of $T$}{c:intT}
+
+\bibliography{quellen}{}
+\bibliographystyle{plain}
+\end{document}
+
